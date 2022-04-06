@@ -15,16 +15,17 @@ class EmployeeSerializer(serializers.ModelSerializer):
         model = Employee
         fields = '__all__'
 
+
 class DepartmanetParentSerializer(serializers.Serializer):
     id = serializers.IntegerField()
 
     def validate(self, attrs):
-        print('DP',attrs)
+        print('DP', attrs)
         return attrs
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        print('DP',representation)
+        print('DP', representation)
         return json.dumps(representation)
 
 
