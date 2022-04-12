@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.dispatch import receiver
 
 class Department(models.Model):
     parent = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True)
@@ -10,6 +10,7 @@ class Department(models.Model):
 
 
 class Person(models.Model):
+    ''' personal information '''
     first_name = models.CharField(max_length=50)
     middle_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
@@ -20,12 +21,12 @@ class Person(models.Model):
 
 
 class Employee(models.Model):
-    '''
-    должность?position вынести в отдельную таблицу??
-    '''
     person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='person_employee')
     department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='empl_department')
     position = models.CharField(max_length=50)
+
+    class Meta:
+        unique_together = ('person', 'department',)
 
     def __str__(self):
         return f'{self.id}  - [{self.person.first_name}- {self.person.last_name}] - {self.department.name} - {self.position}'

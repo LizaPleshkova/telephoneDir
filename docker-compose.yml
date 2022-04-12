@@ -1,0 +1,24 @@
+version: '3.9'
+
+services:
+  web:
+    build: .
+    command: python3 manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/code
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db_psql
+  db_psql:
+    image: postgres:13
+    container_name: db_psql
+    environment:
+      - POSTGRES_DB=telephonDir
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PORT=5432
+    volumes:
+      - ./data/db:/var/lib/postgresql/data

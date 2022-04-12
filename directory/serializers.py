@@ -5,7 +5,7 @@ from .models import Employee, Department, Person
 
 
 class PersonSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
+    id = serializers.IntegerField(required=False)
     first_name = serializers.CharField()
     middle_name = serializers.CharField()
     last_name = serializers.CharField()
@@ -13,20 +13,19 @@ class PersonSerializer(serializers.Serializer):
 
 
 class DepartmanetListSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
+    id = serializers.IntegerField(required=False)
     parent = serializers.IntegerField(allow_null=True)
     name = serializers.CharField()
 
 
 class EmployeeListSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
+    id = serializers.IntegerField(required=False)
     person = serializers.IntegerField()
     position = serializers.CharField()
     department = serializers.IntegerField()
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-
         pers_id = representation['person']
         dep_id = representation['department']
 
@@ -39,6 +38,13 @@ class EmployeeListSerializer(serializers.Serializer):
         representation['department'] = serializer_dep.data
         representation['person'] = serializer_pers.data
         return representation
+
+    def validate(self, data):
+        if PersonService.is_exists(data['person']) is False:
+            raise serializers.ValidationError('check person id', code='invalid')
+        if DepartmentService.is_exists(data['department']) is False:
+            raise serializers.ValidationError('check department id', code='invalid')
+        return data
 
 
 class DepartmanetParentSerializer(serializers.Serializer):

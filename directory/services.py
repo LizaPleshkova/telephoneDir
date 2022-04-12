@@ -42,6 +42,16 @@ class PersonService:
         return data[0]
 
     @staticmethod
+    def create_person(new_person):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                '''INSERT INTO directory_person (first_name, middle_name,last_name,telephone_number)
+                   VALUES(%s, %s, %s, %s) RETURNING *;''', [new_person['first_name'], new_person['middle_name'], new_person['last_name'], new_person['telephone_number']]
+            )
+            data = dictfetchall_list(cursor)
+        return data
+
+    @staticmethod
     def update_person(person_id: int, new_data):
         person = PersonService.get_person(person_id)
         print(person)
@@ -53,6 +63,18 @@ class PersonService:
             where id =  %s::integer
             ''', [new_data['first_name'], new_data['middle_name'], new_data['last_name'], new_data['telephone_number'], new_data['id']])
 
+    @staticmethod
+    def is_exists(pers_id: int):
+        with connection.cursor() as cursor:
+            cursor.execute(''' 
+            select exists(
+                select 1 
+                from directory_person
+                where id=%s
+            )
+            ''', [pers_id])
+            data = cursor.fetchone()
+        return data[0]
 
 class DepartmentService:
 
@@ -87,6 +109,16 @@ class DepartmentService:
         return data
 
     @staticmethod
+    def create_department(new_deaprtment):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                '''INSERT INTO directory_department as dep (name, parent_id)
+                   VALUES(%s, %s::integer) RETURNING *;''', [new_deaprtment['name'], new_deaprtment['parent']]
+            )
+            data = dictfetchall_list(cursor)
+        return data
+
+    @staticmethod
     def get_child_department(department_id: int):
         with connection.cursor() as cursor:
             cursor.execute(
@@ -107,17 +139,38 @@ class DepartmentService:
 
     @staticmethod
     def get_child_department_employees(departments):
-        print(departments, type(departments[0]))
-
-        # dep_list = (print(i) for i in departments['id'])
-        print(dep_list)
+        department_ids = [dep['id'] for dep in departments]
         with connection.cursor() as cursor:
             cursor.execute(
                 '''
-            '''
+                SELECT * FROM directory_employee
+                WHERE department_id = ANY(%s)
+            ''', [department_ids]
             )
             data = dictfetchall_list(cursor)
         return data
+
+    @staticmethod
+    def is_exists(dep_id: int):
+        with connection.cursor() as cursor:
+            cursor.execute(''' 
+            select exists(
+                select 1 
+                from directory_department
+                where id=%s
+            )
+            ''', [dep_id])
+            data = cursor.fetchone()
+        return data[0]
+    
+    @staticmethod
+    def update_department(new_data):
+        with connection.cursor() as cursor:
+            cursor.execute(''' 
+            update directory_department
+            set name=%s, parent_id=%s
+            where id =  %s::integer
+            ''', [new_data['name'], new_data['parent'], new_data['id']])
 
 
 class EmployeeService:
@@ -130,8 +183,6 @@ class EmployeeService:
             FROM directory_employee
             ''')
             data = dictfetchall_list(cursor)
-            print(data)
-
         return data
 
     @staticmethod
@@ -140,8 +191,50 @@ class EmployeeService:
             cursor.execute(''' 
             SELECT id, person_id as person, position, department_id as department
             FROM directory_employee as empl
-            WHERE empl.id = %s::integer
+            WHERE empl.id = %s
             ''', [employee_id])
             data = dictfetchall_list(cursor)
-            # print(data)
+            print(data)
         return data[0]
+
+    @staticmethod
+    def search_employee(search_str: str):
+        with connection.cursor() as cursor:
+            cursor.execute(''' 
+            SELECT empl.id, person_id as person, position, department_id as department
+            FROM directory_employee as empl
+            INNER JOIN directory_person as person ON person.id = empl.person_id
+            WHERE first_name || middle_name || last_name ILIKE '%%' || %s || '%%' or position ILIKE '%%' || %s || '%%'
+            ''', [search_str, search_str])
+            data = dictfetchall_list(cursor)
+        return data
+
+    @staticmethod
+    def create_employee(new_empl):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                '''INSERT INTO directory_employee (person_id, department_id, position)
+                   VALUES(%s, %s, %s) RETURNING *;''', [new_empl['person'], new_empl['department'], new_empl['position']]
+            )
+            data = dictfetchall_list(cursor)
+        return data
+
+
+    @staticmethod
+    def update_employee(new_data):
+        with connection.cursor() as cursor:
+            cursor.execute(''' 
+            update directory_employee
+            set person_id=%s, position=%s, department_id=%s
+            where id =  %s::integer
+            ''', [new_data['person'], new_data['position'], new_data['department'], new_data['id']])
+
+    @staticmethod
+    def delete_employee(employee_id:int):
+        with connection.cursor() as cursor:
+            cursor.execute(''' 
+            DELETE FROM directory_employee
+            WHERE id = %s::integer
+            ''', [employee_id])
+            # data = cursor.fetchone()
+            # print(data)

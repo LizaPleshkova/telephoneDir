@@ -1,12 +1,22 @@
 from pathlib import Path
+import os
+import environ
+
+env = environ.Env(
+    DEBUG=(bool, False)
+)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-q^(on5e%q)_r2&t5w+t1^qs^76(66i5le^4kx@a(cj8h231ilt'
+# Take environment variables from .env file
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+
+# SECRET_KEY = 'django-insecure-q^(on5e%q)_r2&t5w+t1^qs^76(66i5le^4kx@a(cj8h231ilt'
+SECRET_KEY = env("SECRET_KEY")
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -16,6 +26,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'django_filters',
     'directory'
 ]
 
@@ -50,14 +61,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'telephoneDir.wsgi.application'
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'telephoneDir',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'localhost',
-        'PORT': '5432'
-    }
+    'default': env.db()
 }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -74,6 +78,13 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+REST_FRAMEWORK = {
+   'DEFAULT_FILTER_BACKENDS': (
+        'rest_framework.filters.SearchFilter',
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ),
+}
 
 LANGUAGE_CODE = 'en-us'
 

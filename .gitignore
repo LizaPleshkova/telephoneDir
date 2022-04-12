@@ -8,8 +8,7 @@ media
 
 # my folders
 static/
-frontend/vue-cinema/node_modules
-node_modules/
+.env
 data/
 
 # Backup files #
